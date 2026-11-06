@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PS5 14.22 – Browser-Kompatibilitätstest</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{background:#0d0d19;color:#f2f0ff;font-family:system-ui,-apple-system,Arial,sans-serif;margin:0;padding:24px;line-height:1.45}.wrap{max-width:720px;margin:auto}.panel{background:#1a1830;border:1px solid #493f74;border-radius:16px;padding:18px;margin:16px 0}h1{font-size:1.65rem;margin:0 0 8px}h2{font-size:1.1rem;margin:0 0 10px}.muted{color:#bdb8dc;font-size:.94rem}.tag{display:inline-block;border-radius:999px;padding:5px 10px;background:#3a275e;color:#e8d6ff;font-size:.84rem;margin-bottom:12px}button{background:#8e59ef;color:white;border:0;border-radius:12px;padding:14px 18px;font-size:1rem;cursor:pointer}button:focus{outline:3px solid white}table{width:100%;border-collapse:collapse;word-break:break-word}td{padding:9px 5px;border-bottom:1px solid #3b3558;vertical-align:top}td:first-child{width:50%;font-weight:600}.ok{color:#7cdda4}.no{color:#ffb5a9}.unknown{color:#eed08f}pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#ddd7ff}.footer{font-size:.86rem;color:#bdb8dc}
+</style>
+</head>
+<body><div class="wrap">
+<span class="tag">Nur Diagnose – kein Jailbreak</span>
+<h1>PS5-Browser-Test</h1>
+<p class="muted">Für Firmware 14.22 und andere Versionen. Diese Seite testet ausschließlich normale Browser-Funktionen. Sie lädt keine Exploits, sammelt keine Daten und verändert nichts an der Konsole.</p>
+<div class="panel"><button id="go" type="button">Tests starten</button><p id="state" aria-live="polite">Noch kein Test ausgeführt.</p></div>
+<div class="panel"><h2>Ergebnisse</h2><table><tbody id="results"><tr><td colspan="2">Auf „Tests starten“ drücken.</td></tr></tbody></table></div>
+<div class="panel"><h2>Browserkennung</h2><pre id="ua">Noch nicht ermittelt.</pre><p class="muted">Die Browserkennung kann ungenau sein und bestätigt keine Firmware-Version.</p></div>
+<p class="footer">Die Ergebnisse bleiben auf diesem Gerät. Kein Netzwerkversand, keine Datei- oder Systemzugriffe. Ein „Ja“ bei einer Funktion bedeutet nicht, dass eine Schwachstelle vorhanden ist.</p>
+</div>
+<script>
+(function(){
+ var byId=function(id){return document.getElementById(id)};
+ var rows=[];
+ function add(name, result, info){rows.push([name,result,info||''])}
+ function check(name, test){try{add(name, !!test())}catch(e){add(name,null,'Test nicht verfügbar')}}
+ function run(){
+  rows=[];
+  check('JavaScript aktiv',function(){return true});
+  check('WebAssembly',function(){return typeof WebAssembly !== 'undefined'});
+  check('BigInt',function(){return typeof BigInt !== 'undefined'});
+  check('WebGL',function(){var c=document.createElement('canvas');return !!(c.getContext('webgl')||c.getContext('experimental-webgl'))});
+  check('WebGL 2',function(){var c=document.createElement('canvas');return !!c.getContext('webgl2')});
+  check('WebCrypto',function(){return !!(window.crypto&&window.crypto.subtle)});
+  check('SharedArrayBuffer',function(){return typeof SharedArrayBuffer !== 'undefined'});
+  check('Web Worker',function(){return typeof Worker !== 'undefined'});
+  check('Service Worker API',function(){return 'serviceWorker' in navigator});
+  check('Sicherer Kontext (HTTPS)',function(){return window.isSecureContext===true});
+  check('Local Storage',function(){var k='ps5_test_temp';localStorage.setItem(k,'1');var x=localStorage.getItem(k)==='1';localStorage.removeItem(k);return x});
+  var body=byId('results');while(body.firstChild){body.removeChild(body.firstChild)}
+  for(var i=0;i<rows.length;i++){
+   var r=rows[i],tr=document.createElement('tr'),a=document.createElement('td'),b=document.createElement('td');
+   a.textContent=r[0];b.textContent=r[1]===null?'Nicht verfügbar':(r[1]?'Ja':'Nein');b.className=r[1]===null?'unknown':(r[1]?'ok':'no');
+   if(r[2])b.textContent+=' ('+r[2]+')';tr.appendChild(a);tr.appendChild(b);body.appendChild(tr);
+  }
+  byId('ua').textContent=navigator.userAgent||'Keine Browserkennung';
+  byId('state').textContent='Test abgeschlossen: '+rows.length+' Prüfungen. Ergebnisse können als Foto festgehalten werden.';
+ }
+ byId('go').addEventListener('click',run);
+})();
+</script></body></html>
