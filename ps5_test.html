@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PS5 14.22 – Browser-Diagnose</title>
+<style>
+:root{color-scheme:dark;--bg:#0c0915;--panel:#191329;--border:#383050;--text:#f4ecff;--muted:#b8aace;--accent:#a86dff;--ok:#73e3b4;--off:#f0ac8a}
+*{box-sizing:border-box}body{background:radial-gradient(circle at 50% -10%,#352055,transparent 50%),var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Arial,sans-serif;margin:0;min-height:100vh}main{max-width:760px;padding:32px 18px 72px;margin:0 auto}h1{font-size:clamp(28px,5vw,38px);margin:8px 0 12px}h2{font-size:20px;margin:24px 0 12px}.eyebrow{color:var(--accent);font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase}.intro,.notice{color:var(--muted)}.panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px;margin-top:18px}.buttons{display:flex;flex-wrap:wrap;gap:10px}.btn{appearance:none;border:0;border-radius:10px;background:var(--accent);color:#10091d;padding:13px 18px;font:700 15px system-ui,Arial;cursor:pointer}.btn.secondary{background:#34294b;color:var(--text);border:1px solid #574071}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.cell{padding:12px 14px;background:#110d1b;border-radius:10px;border:1px solid #35283e}.key{font-size:13px;color:var(--muted)}.value{font-size:16px;font-weight:700;overflow-wrap:anywhere}.yes{color:var(--ok)}.no{color:var(--off)}.neutral{color:var(--muted)}textarea{width:100%;height:200px;background:#0e0b18;color:var(--text);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:13px;resize:vertical}small{color:var(--muted)}a{color:#c4a0ff}.disclaimer{border-left:3px solid var(--accent);padding:8px 12px;background:rgba(168,109,255,.07);font-size:14px}
+</style>
+</head>
+<body><main>
+<div class="eyebrow">Eigenes Forschungsprojekt · Firmware 14.22</div>
+<h1>PS5 Browser-Diagnose</h1>
+<p class="intro">Dieser Test sammelt ausschließlich technische Browser-Eigenschaften. Er enthält <strong>keinen Jailbreak, keine Exploits und keine Belastungstests</strong>.</p>
+<div class="panel"><div class="buttons"><button type="button" class="btn" id="run">Diagnose starten</button><button type="button" class="btn secondary" id="copy">Bericht kopieren</button></div><p id="status" role="status">Bereit. Bitte „Diagnose starten“ drücken.</p><div class="disclaimer">Eine unterstützte Browserfunktion beweist <strong>keine Sicherheitslücke</strong>. Ein fehlendes API beweist nicht, dass ein Exploit unmöglich ist.</div></div>
+<h2>Browser-Informationen</h2><div class="grid" id="system"><div class="cell">Noch keine Diagnose durchgeführt.</div></div>
+<h2>Funktionstests</h2><div class="grid" id="results"><div class="cell">Noch keine Diagnose durchgeführt.</div></div>
+<div class="panel"><h2 style="margin-top:0">Bericht (lokal)</h2><p class="notice">Es werden keine Daten verschickt. Du kannst den Bericht markieren oder kopieren und anschließend in den Chat einfügen.</p><textarea id="report" spellcheck="false" aria-label="Diagnosebericht" placeholder="Noch keine Ergebnisse"></textarea></div>
+<p><small>Versionsstand: Test 2 · 6. November 2026. Deine PS5-Firmware wird nicht automatisch ausgelesen. Die Angabe 14.22 stammt von dir.</small></p>
+</main>
+<script>
+(function(){
+'use strict';
+var $=function(id){return document.getElementById(id)};
+function cell(label,value,cls){var el=document.createElement('div');el.className='cell';var key=document.createElement('div');key.className='key';key.textContent=label;var val=document.createElement('div');val.className='value '+(cls||'neutral');val.textContent=String(value);el.appendChild(key);el.appendChild(val);return el}
+function clear(el){while(el.firstChild)el.removeChild(el.firstChild)}
+function testStorage(type){try{var s=window[type];if(!s)return false;var k='__ps5_diag_tmp__';s.setItem(k,'1');var good=s.getItem(k)==='1';s.removeItem(k);return good}catch(e){return false}}
+function testGL(kind){try{var c=document.createElement('canvas');return !!c.getContext(kind)}catch(e){return false}}
+function isSupported(name,check){try{return !!check()}catch(e){return false}}
+function run(){
+ var ua=navigator.userAgent||'Nicht verfügbar';
+ var infos=[['Angenommene Firmware','14.22 (nicht automatisch geprüft)'],['User-Agent',ua],['Sprache',navigator.language||'Unbekannt'],['Plattform',navigator.platform||'Unbekannt'],['Sichere Verbindung',location.protocol==='https:'?'HTTPS':'Nicht HTTPS']];
+ var tests=[
+ ['JavaScript',true],
+ ['BigInt',typeof BigInt!=='undefined'],
+ ['WebAssembly',typeof WebAssembly!=='undefined'],
+ ['WebGL',testGL('webgl')||testGL('experimental-webgl')],
+ ['WebGL2',testGL('webgl2')],
+ ['WebCrypto',isSupported('crypto',function(){return !!(window.crypto&&crypto.subtle)})],
+ ['SharedArrayBuffer',typeof SharedArrayBuffer!=='undefined'],
+ ['Web Worker API',typeof Worker!=='undefined'],
+ ['Service Worker API',!!(navigator.serviceWorker)],
+ ['Local Storage',testStorage('localStorage')],
+ ['Session Storage',testStorage('sessionStorage')],
+ ['IndexedDB API',typeof indexedDB!=='undefined'],
+ ['Fetch API',typeof fetch!=='undefined'],
+ ['TextEncoder',typeof TextEncoder!=='undefined'],
+ ['structuredClone',typeof window.structuredClone==='function'],
+ ['crossOriginIsolated',window.crossOriginIsolated===true]
+ ];
+ var sys=$('system'),out=$('results');clear(sys);clear(out);
+ var report=['PS5-Browser-Diagnose · Test 2','Datum: '+new Date().toISOString(),'','Browser:'];
+ for(var i=0;i<infos.length;i++){sys.appendChild(cell(infos[i][0],infos[i][1]));report.push(infos[i][0]+': '+infos[i][1])}
+ report.push('','Funktionen:');
+ for(var j=0;j<tests.length;j++){var label=tests[j][0],yes=tests[j][1];out.appendChild(cell(label,yes?'Verfügbar':'Nicht verfügbar',yes?'yes':'no'));report.push(label+': '+(yes?'Ja':'Nein'))}
+ report.push('','Hinweis: Diese Diagnose prüft Browser-Funktionen, KEINE Sicherheitslücken.');
+ $('report').value=report.join('\n');$('status').textContent='Diagnose abgeschlossen: '+tests.length+' Funktionen geprüft.';
+}
+$('run').onclick=run;
+$('copy').onclick=function(){var area=$('report');if(!area.value){$('status').textContent='Bitte zuerst die Diagnose starten.';return}area.focus();area.select();try{if(document.execCommand&&document.execCommand('copy')){$('status').textContent='Bericht kopiert.';return}}catch(e){}$('status').textContent='Bericht markiert. Bitte manuell kopieren.'};
+})();
+</script>
+</body></html>
